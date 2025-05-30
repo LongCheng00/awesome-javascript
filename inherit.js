@@ -1,5 +1,5 @@
 
-function inheritPrototype(Child, Parent) { 
+function inheritPrototype(Child, Parent) {
   const prototype = Object.create(Parent.prototype)
   prototype.constructor = Child
   Child.prototype = prototype
@@ -8,7 +8,7 @@ function inheritPrototype(Child, Parent) {
 function Parent(name) {
   this.name = name
 }
-Parent.prototype.sayHello = function() {
+Parent.prototype.sayHello = function () {
   console.log(`Hello, my name is ${this.name}`);
 }
 function Child(name, age) {
@@ -16,7 +16,7 @@ function Child(name, age) {
   this.age = age
 }
 inheritPrototype(Child, Parent)
-Child.prototype.sayAge = function() {
+Child.prototype.sayAge = function () {
   console.log(`I am ${this.age} years old`);
 }
 
