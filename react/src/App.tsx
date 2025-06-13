@@ -2,17 +2,18 @@ import { useState } from 'react'
 import reactLogo from './assets/react.svg'
 import viteLogo from '/vite.svg'
 // import Board from './components/Board'
+import Products from './components/Products'
 import './App.css'
 
-function Products() {
-  const products = [
+function Product() {
+  const product = [
     { id: 1, name: 'Laptop', price: 999.99 },
     { id: 2, name: 'Smartphone', price: 499.99, isSmart: true },
     { id: 3, name: 'Tablet', price: 299.99 },]
-  const listItems = products.map((product) =>
-    <li key={product.id}
-      style={{ color: product.isSmart ? 'magenta' : 'darkgreen' }}>
-      {product.name}</li>
+  const listItems = product.map((p) =>
+    <li key={p.id}
+      style={{ color: p.isSmart ? 'magenta' : 'darkgreen' }}>
+      {p.name}</li>
   )
   return (
     <ul>{listItems}</ul>
@@ -135,7 +136,7 @@ function Game() {
   const xIsNext = currentMove % 2 === 0
   const currentSquares = history[currentMove]
   function handlePlay(nextSquares: Array<string | null>) {
-    const nextHistory =[...history.slice(0, currentMove + 1), nextSquares] 
+    const nextHistory = [...history.slice(0, currentMove + 1), nextSquares]
     setHistory(nextHistory)
     // setXIsNext(!xIsNext)
     setCurrentMove(nextHistory.length - 1)
@@ -173,11 +174,12 @@ function App() {
   }
   return (
     <>
+      <Products />
       <Game />
       <UserProfile />
       <div>
         <MyButton count={count} onClick={handleClick} />
-        <Products />
+        <Product />
         <MyButton count={count} onClick={handleClick} />
         <a href="https://vite.dev" target="_blank">
           <img src={viteLogo} className="logo" alt="Vite logo" />
