@@ -12,6 +12,43 @@ function SearchBar() {
     </div>
   </div>)
 }
+function ProductRow({ ps, category }) {
+  const temp = ps.filter(p => p.category === category);
+  if (temp.length === 0) return null; // If no products in this category, skip rendering
+  return (
+    <>
+      <tr key={category}>
+        <td colSpan="2">{category}</td>
+      </tr>
+      {temp.map((p) => (
+        <tr key={p.name}>
+          <td>{p.name}</td>
+          <td>{p.price}</td>
+        </tr>
+      ))}
+    </>
+  );
+}
+
+function ProductTable({ products }) {
+  console.log(products);
+  const categorys = [...new Set(products.map(product => product.category))];
+  return (
+    <table className="product-table">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Price</th>
+        </tr>
+      </thead>
+      <tbody>
+        {categorys.map((category) => (
+          <ProductRow key={category} ps={products} category={category} />
+        ))}
+      </tbody>
+    </table>
+  );
+}
 
 
 export default function Products({ onAddToCart }) {
@@ -26,14 +63,7 @@ export default function Products({ onAddToCart }) {
   return (
     <div className="products">
       <SearchBar />
-      {products.map((product) => (
-        <div key={product.id} className="product">
-          <h2>{product.name}</h2>
-          <p>{product.description}</p>
-          <p>{product.price}</p>
-          <button onClick={() => onAddToCart(product)}>Add to Cart</button>
-        </div>
-      ))}
+      <ProductTable products={products} />
     </div>
   );
 }
