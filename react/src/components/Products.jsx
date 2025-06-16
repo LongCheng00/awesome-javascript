@@ -1,38 +1,44 @@
+import React, { useState } from 'react'
 
-function SearchBar() {
-  return (<div className="search-bar">
-    <div className="search">
-      <input type="text" placeholder="Search..." />
-    </div>
-    <div className="filter">
-      <label>
-        <input type="checkbox" />
-        Only show products in stock
-      </label>
-    </div>
-  </div>)
+function SearchBar({ filterText, inStockOnly, onFilterTextChange, onInStockOnlyChange }) {
+  return (<form>
+    <input type="text" placeholder="Search..." value={filterText} onChange={(e) => onFilterTextChange(e.target.value)} />
+    <label>
+      <input type="checkbox" checked={inStockOnly} onChange={(e) => onInStockOnlyChange(e.target.checked)} />
+      {' '}Only show products in stock
+    </label>
+  </form>)
 }
-function ProductRow({ ps, category }) {
-  const temp = ps.filter(p => p.category === category);
-  if (temp.length === 0) return null; // If no products in this category, skip rendering
+function ProductRow({ product }) {
+  const name = product.stocked ? product.name :
+    <span style={{ color: 'red' }}> {product.name}</span>
   return (
-    <>
-      <tr key={category}>
-        <td colSpan="2">{category}</td>
-      </tr>
-      {temp.map((p) => (
-        <tr key={p.name}>
-          <td>{p.name}</td>
-          <td>{p.price}</td>
-        </tr>
-      ))}
-    </>
-  );
+    <tr key={product.name}>
+      <td>{name}</td>
+      <td>{product.price}</td>
+    </tr >
+  )
 }
 
-function ProductTable({ products }) {
-  console.log(products);
-  const categorys = [...new Set(products.map(product => product.category))];
+function ProductTable({ products, filterText, inStockOnly }) {
+  const rows = []
+  let lastCategory = null
+  products.forEach((p) => {
+    if (p.name.toLowerCase().indexOf(filterText.toLowerCase()) === -1) {
+      return;
+    }
+    if (inStockOnly && !p.stocked) {
+      return;
+    }
+    if (p.category !== lastCategory) {
+      rows.push(<tr key={p.category}>
+        <td colSpan="2">{p.category}</td>
+      </tr>)
+    }
+    rows.push(<ProductRow key={p.name} product={p} />)
+    lastCategory = p.category
+  }
+  )
   return (
     <table className="product-table">
       <thead>
@@ -42,9 +48,7 @@ function ProductTable({ products }) {
         </tr>
       </thead>
       <tbody>
-        {categorys.map((category) => (
-          <ProductRow key={category} ps={products} category={category} />
-        ))}
+        {rows}
       </tbody>
     </table>
   );
@@ -60,10 +64,12 @@ export default function Products({ onAddToCart }) {
     { category: "Vegetables", price: "$4", stocked: false, name: "Pumpkin" },
     { category: "Vegetables", price: "$1", stocked: true, name: "Peas" }
   ]
+  const [filterText, setFilterText] = useState('');
+  const [inStockOnly, setInStockOnly] = useState(false);
   return (
     <div className="products">
-      <SearchBar />
-      <ProductTable products={products} />
+      <SearchBar filterText={filterText} inStockOnly={inStockOnly} onFilterTextChange={setFilterText} onInStockOnlyChange={setInStockOnly} />
+      <ProductTable products={products} filterText={filterText} inStockOnly={inStockOnly} />
     </div>
   );
 }
