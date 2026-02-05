@@ -5,6 +5,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllersWithViews();
 
 var app = builder.Build();
+var configuration = app.Services.GetRequiredService<IConfiguration>();
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
@@ -14,7 +15,16 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-app.UseStaticFiles();
+app.UseStaticFiles(new StaticFileOptions()
+{
+    OnPrepareResponse = (context) =>
+    {
+        // Disable caching for all static files.
+        context.Context.Response.Headers.Append("Cache-Control", "no-cache, no-store, must-revalidate");
+        context.Context.Response.Headers.Append("Pragma", "no-cache");
+        context.Context.Response.Headers["Expires"] = configuration["StaticFiles:Headers:Expires"];
+    }
+});
 app.UseRouting();
 
 
