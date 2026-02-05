@@ -38,6 +38,12 @@ C2
 
 [https://karma-runner.github.io/](https://karma-runner.github.io)
 
+<https://weblog.west-wind.com/posts/2016/may/23/strongly-typed-configuration-settings-in-aspnet-core>
+
+<https://www.strathweb.com/2016/09/strongly-typed-configuration-in-asp-net-core-without-ioptionst/>
+
+<https://www.ottorinobruni.com/how-to-use-the-options-pattern-in-asp-net-core-for-strongly-typed-configuration/>
+
 \n
 
 \n
