@@ -44,6 +44,22 @@ C2
 
 <https://www.ottorinobruni.com/how-to-use-the-options-pattern-in-asp-net-core-for-strongly-typed-configuration/>
 
+C3
+
+<https://v17.angular.io/guide/ngmodule-vs-jsmodule>
+
+<https://v9.angular.cn/guide/ngmodule-vs-jsmodule>
+
+<https://angular.dev/guide/di>
+
+**<https://learn.microsoft.com/en-us/dotnet/core/extensions/dependency-injection/overview>**
+
+<https://developer.mozilla.org/zh-CN/docs/Web/CSS>
+
+<https://v17.angular.io/guide/observables-in-angular>
+
+<https://rxjs.dev/guide/observable>
+
 \n
 
 \n

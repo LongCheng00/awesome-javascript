@@ -6,11 +6,11 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllersWithViews();
 // builder.Services.AddHealthChecks();
-builder.Services.AddHealthChecks().AddCheck<ICMPHealthCheck>("ICMP");
-// builder.Services.AddHealthChecks()
-//     .AddCheck("ICMP01", new ICMPHealthCheck("www.google.com", 100))
-//     .AddCheck("ICMP02", new ICMPHealthCheck("www.ryadel.com", 100))
-//     .AddCheck("ICMP03", new ICMPHealthCheck("www.does-not-exist.com", 100));
+// builder.Services.AddHealthChecks().AddCheck<ICMPHealthCheck>("ICMP");
+builder.Services.AddHealthChecks()
+    .AddCheck("ICMP01", new ICMPHealthCheck("www.google.com", 100))
+    .AddCheck("ICMP02", new ICMPHealthCheck("www.ryadel.com", 100))
+    .AddCheck("ICMP03", new ICMPHealthCheck("www.does-not-exist.com", 100));
 
 var app = builder.Build();
 var configuration = app.Services.GetRequiredService<IConfiguration>();
@@ -35,7 +35,7 @@ app.UseStaticFiles(new StaticFileOptions()
 });
 app.UseRouting();
 
-app.UseHealthChecks("/health");
+app.UseHealthChecks("/health", new CustomHealthCheckOptions());
 
 app.UseEndpoints(endpoints =>
 {

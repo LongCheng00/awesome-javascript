@@ -1,5 +1,6 @@
 
 using Microsoft.Extensions.Diagnostics.HealthChecks;
+using System.Net.NetworkInformation;
 
 namespace HealthCheck;
 
