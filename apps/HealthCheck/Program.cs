@@ -1,8 +1,16 @@
+using HealthCheck;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 
 builder.Services.AddControllersWithViews();
+// builder.Services.AddHealthChecks();
+builder.Services.AddHealthChecks().AddCheck<ICMPHealthCheck>("ICMP");
+// builder.Services.AddHealthChecks()
+//     .AddCheck("ICMP01", new ICMPHealthCheck("www.google.com", 100))
+//     .AddCheck("ICMP02", new ICMPHealthCheck("www.ryadel.com", 100))
+//     .AddCheck("ICMP03", new ICMPHealthCheck("www.does-not-exist.com", 100));
 
 var app = builder.Build();
 var configuration = app.Services.GetRequiredService<IConfiguration>();
@@ -27,10 +35,19 @@ app.UseStaticFiles(new StaticFileOptions()
 });
 app.UseRouting();
 
+app.UseHealthChecks("/health");
 
-app.MapControllerRoute(
-    name: "default",
-    pattern: "{controller}/{action=Index}/{id?}");
+app.UseEndpoints(endpoints =>
+{
+    endpoints.MapControllerRoute(
+        name: "default",
+        pattern: "{controller}/{action=Index}/{id?}");
+    endpoints.MapControllers();
+    // endpoints.MapHealthChecks("/health");
+});
+// app.MapControllerRoute(
+//     name: "default",
+//     pattern: "{controller}/{action=Index}/{id?}");
 
 app.MapFallbackToFile("index.html");
 
