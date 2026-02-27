@@ -60,6 +60,16 @@ C3
 
 <https://rxjs.dev/guide/observable>
 
+C4
+
+<https://github.com/PacktPublishing/ASP.NET-Core-3-and-Angular-9-Third-Edition>
+
+<https://github.com/angular/in-memory-web-api>
+
+<https://simplemaps.com/data/world-cities>
+
+[github.com/dotnet/efcore?tab=readme-ov-file#entity-framework-core](http://github.com/dotnet/efcore?tab=readme-ov-file#entity-framework-core)
+
 \n
 
 \n
