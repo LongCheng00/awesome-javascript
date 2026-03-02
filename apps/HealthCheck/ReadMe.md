@@ -70,6 +70,8 @@ C4
 
 [github.com/dotnet/efcore?tab=readme-ov-file#entity-framework-core](http://github.com/dotnet/efcore?tab=readme-ov-file#entity-framework-core)
 
+<https://learn.microsoft.com/zh-cn/ef/core/what-is-new/>
+
 \n
 
 \n
