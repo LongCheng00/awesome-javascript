@@ -10,7 +10,9 @@ public class City
   public int Id { get; set; }
   public string Name { get; set; } = null!;
   public string Name_ASCII { get; set; } = null!;
+  [Column(TypeName = "decimal(7,4)")]
   public decimal lat { get; set; }
+  [Column(TypeName = "decimal(7,4)")]
   public decimal lng { get; set; }
   [ForeignKey("Country")]
   public int CountryId { get; set; }

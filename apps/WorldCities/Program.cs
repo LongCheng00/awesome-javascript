@@ -1,16 +1,19 @@
 
 using WorldCities.Data;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 
 builder.Services.AddControllersWithViews();
+builder.Services.AddEntityFrameworkSqlServer();
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection"))
+    options.UseSqlServer(builder.Configuration.GetConnectionString("WorldCities"))
 );
-builder.Services.AddEntityFrameworkSqlite();
+// builder.Services.AddEntityFrameworkSQLServer();
 
 var app = builder.Build();
 
