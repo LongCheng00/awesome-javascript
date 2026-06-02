@@ -6,7 +6,8 @@
     "start": "ng serve",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
-    "test": "ng test"
+    "test": "ng test",
+    "json": "json-server data.js -p 3500 -m authMiddleware.js"
   },
   "private": true,
   "packageManager": "pnpm@10.7.0",
@@ -17,6 +18,8 @@
     "@angular/forms": "^21.2.0",
     "@angular/platform-browser": "^21.2.0",
     "@angular/router": "^21.2.0",
+    "@fortawesome/fontawesome-free": "^7.2.0",
+    "bootstrap": "^5.3.8",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0"
   },
@@ -24,6 +27,8 @@
     "@angular/build": "^21.2.10",
     "@angular/cli": "^21.2.10",
     "@angular/compiler-cli": "^21.2.0",
+    "json-server": "1.0.0-beta.15",
+    "jsonwebtoken": "^9.0.3",
     "prettier": "^3.8.1",
     "typescript": "~5.9.2"
   }
