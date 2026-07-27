@@ -2,13 +2,12 @@
 
 上一次我们深入探讨了两个服务于测试过程的MCP Server的打造过程。我们一步步拆解问题，不是简单地扔给测试工程师一套新工具，而是站在大模型的“视角”，重新设计解决方案。我们不再是传统意义上的“建平台、发脚本”模式，而是让大模型像一个智能助手一样，能自然地“读懂”报告、“诊断”漏网之鱼，并给出精准的修复建议。
 
-
 当大模型不再只是“聊天机器人”，而是能无缝接入你的私有测试生态时，那种效率跃升的快感，是不是让你有点小激动？想要做到这一点，就需要智能体的参与了。一说智能体想必很多人都能聊上几句，但是要说到Agentic模式估计就没几个人听说过了。其实Agentic模式就像建筑蓝图，搭建智能体应用时，用Agentic模式进行设计能让我们少走弯路。
-
 
 今天我们就详细聊一聊**反思、提示链、规划、并行处理和路由**这五种Agentic 模式，为你后续的智能体设计铺平道路。
 
->这节课的demo是使用langchain、Ollama以及gpt-oss:120b-cloud完成的。
+> 这节课的demo是使用langchain、Ollama以及gpt-oss:120b-cloud完成的。
+
 ## Agentic模式之旅
 
 ## 反思：从“粗糙初稿”到“精雕细琢”的闭环之旅！
@@ -18,10 +17,9 @@
 ![图片](https://static001.geekbang.org/resource/image/b9/0f/b92c060c91b54a18fe63b345bd15dc0f.png?wh=1726x580)
 这个流程从“初始输出”起步，经“评估输出”挑刺反馈后迭代“改进输出”，通过循环决策直到满足标准，最终输出达到预期的结果，这是大模型自己的“打磨升级过程”。其中生成大模型和反思大模型既可能是两个大模型，也可能是一个大模型配置了两个不同的系统提示词，一个是生成内容的系统提示词，一个是反思评价的系统提示词。
 
-
 这个反思过程特别适合设计回归测试的测试计划，初始大模型基于变更日志甩个回归计划跑全接口库，优先核心模块，反思大模型审视可行性评价的标准，例如回归时长、覆盖度等方面，用JaCoCo数据反馈风险点，循环评估，直到满足反思大模型的审视可行性标准后，反馈最终的回归测试计划。这样的过程一点也不输于传统的归回测试计划的评估方法，传统计划靠经验猜，反思用数据自纠，避开“多跑无用功”。
 
-```perl
+```python
 import json  # 用于JSON数据的序列化和反序列化，处理测试计划和JaCoCo数据的输入/输出
 from super_json import SuperJSON  # 增强JSON解析库，用于处理LLM可能返回的非标准JSON响应（如带Markdown的文本）
 from pydantic import BaseModel  # 数据验证库，用于定义Evaluation模型，确保反馈结构化
@@ -31,8 +29,8 @@ from langchain.prompts import PromptTemplate  # LangChain提示模板，用于�
 
 # 定义评估状态枚举：PASS表示计划通过评估，FAIL表示需迭代优化
 class EvaluationStatus(enum.Enum):
-    PASS = "PASS"  
-    FAIL = "FAIL"  
+    PASS = "PASS"
+    FAIL = "FAIL"
 
 # 定义评估结果模型：使用Pydantic确保JSON响应严格匹配结构，避免解析错误
 class Evaluation(BaseModel):
@@ -50,23 +48,23 @@ CHANGE_LOG = """
 
 # 模拟JaCoCo数据（实际从mcp-jacoco-server或XML解析获取，这里用文件级JSON数组格式）
 JACOCO_DATA = [
-    {  
+    {
         "sourcefile": "PasswordUtil.java",
         "package": "com/cicc/ut/util",
         "lines": {
-            "nocovered": [],  
-            "partiallycovered": []  
+            "nocovered": [],
+            "partiallycovered": []
         },
         "branch": {
             "nocovered": [],
             "partiallycovered": []
         }
     },
-    { 
+    {
         "sourcefile": "UserServiceImpl.java",
         "package": "com/cicc/ut/service/impl",
         "lines": {
-            "nocovered": [  
+            "nocovered": [
                 33,
                 67,
                 69,
@@ -76,8 +74,8 @@ JACOCO_DATA = [
             "partiallycovered": []
         },
         "branch": {
-            "nocovered": [67],  
-            "partiallycovered": [32] 
+            "nocovered": [67],
+            "partiallycovered": [32]
         }
     },
     {  # 无风险文件
@@ -132,7 +130,7 @@ def generate_test_plan(change_log: str, feedback=None, model="qwen3:8b") -> dict
     prompt = f"/no_think Based on the following change log, generate a regression test plan. Focus on running the full interface library, prioritizing core modules. Output as JSON with keys: plan_summary, prioritized_modules, estimated_duration (in hours), expected_coverage (>90%). Change log: {change_log}"
     if feedback:  # 如果有反馈，注入prompt中，实现Reflection迭代
         prompt += f"\nIncorporate this feedback to improve: {feedback}"
-    
+
     # 初始化Ollama LLM实例，使用指定模型进行本地推理
     llm = OllamaLLM(model=model)
     # 创建LangChain提示模板：动态注入prompt变量
@@ -142,13 +140,13 @@ def generate_test_plan(change_log: str, feedback=None, model="qwen3:8b") -> dict
     )
     # 调用链：模板 | LLM，生成计划JSON字符串
     plan_json_str = (prompt_template | llm).invoke({"prompt": prompt}).strip()
-    
+
     # 尝试解析LLM输出为dict（假设LLM严格输出JSON）
     try:
         plan = json.loads(plan_json_str)
     except json.JSONDecodeError:  # 兜底：如果LLM输出非JSON，回退到字符串dict
         plan = {"plan_summary": plan_json_str, "prioritized_modules": [], "estimated_duration": 24, "expected_coverage": 85}
-    
+
     # 打印生成的计划，便于调试和日志追踪
     print(f"Generated Test Plan:\n{json.dumps(plan, indent=2)}")
     return plan  # 返回dict，便于后续评估和迭代
@@ -163,7 +161,7 @@ def evaluate(plan: dict, jacoco_data: list) -> Evaluation:
     :return: Evaluation模型实例，含状态、反馈、推理
     """
     print("\n--- Evaluating Test Plan ---")  # 日志：评估开始
-    
+
     # 准备JaCoCo summary：遍历数据，提取nocovered lines，按package/sourcefile组风险
     risk_points = []  # 风险点列表：如"com/cicc/ut/service/impl.UserServiceImpl.java: lines [33,67,...]"
     total_nocovered_lines = 0  # 总未覆盖行数，用于粗估覆盖率
@@ -172,12 +170,12 @@ def evaluate(plan: dict, jacoco_data: list) -> Evaluation:
         if nocovered_lines:  # 如果有未覆盖行
             total_nocovered_lines += len(nocovered_lines)  # 累加总数
             risk_points.append(f"{item['package']}.{item['sourcefile']}: lines {nocovered_lines} not covered")  # 组装风险描述
-    
+
     # 模拟整体覆盖率：粗估公式（假设总行1000，nocovered比例；实际项目用精确metrics）
     estimated_coverage = max(0, 100 - (total_nocovered_lines / 10))  # 简单线性估算，防负值
     # 构建summary字符串：覆盖率 + 风险点，供prompt注入
     jacoco_summary = f"Estimated JaCoCo coverage: {estimated_coverage:.1f}%. Risk points: {'; '.join(risk_points) if risk_points else 'No major risks detected'}. Focus on uncovered lines in high-risk packages."
-    
+
     # 创建评估prompt模板：指定标准（时长<24h、覆盖>90%、风险覆盖），注入plan和JaCoCo summary
     prompt_critique = PromptTemplate(
         input_variables=["plan", "jacoco_summary"],  # 输入：计划JSON + JaCoCo摘要
@@ -192,17 +190,17 @@ def evaluate(plan: dict, jacoco_data: list) -> Evaluation:
             "{{\"evaluation\": \"PASS|FAIL\", \"feedback\": \"...\",\"reasoning\": \"...\"}}"  # 精确格式
         )
     )
-    
+
     # 初始化评估LLM
     llm = OllamaLLM(model="qwen3:8b")
     # 调用链：生成批判响应文本
     response_critique_txt = (prompt_critique | llm).invoke({"plan": json.dumps(plan), "jacoco_summary": jacoco_summary})
-    
+
     # 使用SuperJSON解析LLM文本输出为dict（容忍非标准JSON）
     response_critique_json = SuperJSON.loads(response_critique_txt)
     # 实例化Evaluation模型，进行验证
     critique = Evaluation(**response_critique_json)
-    
+
     # 打印评估结果，便于日志和调试
     print(f"Evaluation Status: {critique.evaluation}")
     print(f"Evaluation Feedback: {critique.feedback}")
@@ -218,10 +216,10 @@ current_plan = generate_test_plan(CHANGE_LOG)  # 第一轮调用，启动循环
 while current_iteration < max_iterations:
     current_iteration += 1  # 递增迭代计数
     print(f"\n--- Iteration {current_iteration} ---")  # 日志：当前轮次
-    
+
     # 执行评估：注入当前计划和JaCoCo数据
     evaluation_result = evaluate(current_plan, JACOCO_DATA)
-    
+
     # 决策分岔：PASS则收官，FAIL则反馈迭代
     if evaluation_result.evaluation == EvaluationStatus.PASS:
         print("\nFinal Test Plan:")  # 日志：最终计划
@@ -234,8 +232,8 @@ while current_iteration < max_iterations:
         if current_iteration == max_iterations:
             print("\nMax iterations reached. Last attempt:")  # 日志：上限警告
             print(json.dumps(current_plan, indent=2))  # 输出最终尝试版
-
 ```
+
 上面是一个模拟反思过程的实现demo，模拟了一个自动化生成和优化软件回归测试计划的场景。generate_test_plan()和evaluate()是核心代码，主要是用于测试计划生成以及测试计划评估，通过将生成和评估两个环节连接起来，通过generate_test_plan()生成一个测试计划，然后evaluate()会评估当前的测试计划，并给出评估结果以及评估意见，评估意见存入feedback后进入下一轮的generate_test_plan()和evaluate()的循环，直到评估结果为PASS或者到达最大循环次数为止。
 
 这个代码通过生成、评估、反思、再生成的一个闭环，利用 LLM 的能力来自动化地创建和迭代优化测试计划的任务过程。
@@ -247,7 +245,7 @@ while current_iteration < max_iterations:
 ![图片](https://static001.geekbang.org/resource/image/21/5b/21d71227ec8fee25145e7b4ba808545b.png?wh=1686x366)
 它特别适合那些可以明确划分成可预测、线性子任务的场景，避免了单次 LLM 调用可能带来的复杂性和不确定性。提示链的核心就是将一个任务分解成不同阶段，如规划、验证、执行，然后每个阶段都专注以单一职责从而确保流程的可靠和可控。这样可以提升输出质量、减少幻觉风险。
 
-```perl
+```python
 from langchain_ollama import OllamaLLM
 from langchain.prompts import PromptTemplate
 
@@ -290,6 +288,7 @@ test_cases = (prompt2 | llm2).invoke({"refined_story": refined_story}).strip()
 print("\n生成的测试用例：")
 print(test_cases)
 ```
+
 上面的例子中使用LangChain实现了一个测试用例生成的提示链的智能体，核心思想是将一个复杂的任务分解成多个简单的、连续的步骤，每一步都由一个独立的智能体调用来完成，并且前一步的输出会作为后一步的输入。
 
 这个例子展示了从一个用户故事到测试用例生成的过程，把任务分解成了两步，第一步先完善用户故事，再把第一步生成的内容作为第二步的输入，生成测试用例，保证信息的连续性和准确性。这种分步处理让每个 LLM 的任务更聚焦、更简单，从而更容易获得高质量的输出。如果一步到位，直接让 LLM 从原始故事生成测试用例，结果可能会遗漏很多细节。
@@ -333,7 +332,7 @@ Plan = Dict[str, Any]  # goal: str, steps: List[Task]
 # Ollama API生成函数：直戳本地11434，stream=False防乱码，format="json"锁输出
 def ollama_generate(prompt: str, model: str = model_name) -> str:
     try:
-        response = requests.post("http://localhost:11434/api/generate", 
+        response = requests.post("http://localhost:11434/api/generate",
                                  json={"model": model, "prompt": prompt, "stream": False, "format": "json"},  # 锁JSON输出
                                  timeout=60)  # 加长超时，防慢响应
         response.raise_for_status()
@@ -343,9 +342,9 @@ def ollama_generate(prompt: str, model: str = model_name) -> str:
         print(f"Ollama Error: {str(e)}")  # 日志
         return '{"goal": "...", "steps": []}'  # 模拟空JSON，防解析崩
 
-# Step 1: Generate the Plan 
+# Step 1: Generate the Plan
 prompt_planner = (  # 规划prompt：指导拆解UI子任务
-    "/no_think\n"  
+    "/no_think\n"
     "Create a step-by-step plan for UI automation testing.\n"
     "Decompose into dynamic sub-tasks, assign to worker types (DOMAnalyzer, ScriptGenerator, BrowserRunner, VisualReporter).\n"
     "Dependencies: DOM before scripting; parallel browsers.\n\n"
@@ -369,7 +368,7 @@ for step in plan.get("steps", []):
     description = step.get("description", "")
     assigned_to = step.get("assigned_to", "Unknown")
     print(f"\n--- Executing Step {task_id}: {description} (Worker: {assigned_to}) ---")
-    
+
     # 动态工蜂：ollama_generate + 专属prompt
     if assigned_to == "DOMAnalyzer":  # DOM
         worker_prompt = f"Analyze UI for: {description}. Changes: {ui_change_log}. Risks: {str(dom_risks)}. Output STRICT JSON: {{\"elements\": [...], \"browser_issues\": [...]}}"
@@ -378,13 +377,13 @@ for step in plan.get("steps", []):
             worker_output = json.loads(output_txt)
         except:
             worker_output = {"elements": [], "browser_issues": []}
-    
+
     elif assigned_to == "ScriptGenerator":  # 脚本
         prev_output = worker_outputs.get(task_id - 1, {"elements": []}) if task_id > 0 else {"elements": []}
         worker_prompt = f"Generate Playwright scripts for: {description}. Elements: {str(prev_output.get('elements', []))}. Output code snippets for Chrome/Firefox/Mobile."
         output_txt = ollama_generate(worker_prompt)
         worker_output = {"scripts": output_txt.strip()}
-    
+
     elif assigned_to == "BrowserRunner":  # 执行
         prev_output = worker_outputs.get(task_id - 1, {"scripts": "N/A"})
         worker_prompt = f"Simulate browser run for: {description}. Scripts: {str(prev_output.get('scripts', ''))}. Output STRICT JSON: {{\"results\": {{\"chrome_pass\": 95, \"firefox_fail\": 1, \"mobile_stable\": 98}}, \"screenshots\": [\"...\"]}}"
@@ -393,16 +392,16 @@ for step in plan.get("steps", []):
             worker_output = json.loads(output_txt)
         except:
             worker_output = {"results": {"chrome_pass": 95, "firefox_fail": 1, "mobile_stable": 98}}
-    
+
     elif assigned_to == "VisualReporter":  # 报告
         prev_output = worker_outputs.get(task_id - 1, {"results": {}})
         worker_prompt = f"Generate visual report for: {description}. Results: {str(prev_output.get('results', {}))}. Output Markdown with diffs/stability scores."
         output_txt = ollama_generate(worker_prompt)
         worker_output = {"report": output_txt.strip()}
-    
+
     else:  # 兜底通用worker
         worker_output = {"output": f"Simulated {assigned_to} for {description}"}
-    
+
     worker_outputs[task_id] = worker_output
     print(f"Worker Output:\n{json.dumps(worker_output, indent=2) if isinstance(worker_output, dict) else worker_output}")
 
@@ -416,14 +415,15 @@ except json.JSONDecodeError:
     final_plan = {"summary": "Plan synthesized; compatibility 96%, stability 97% - Ready for CI!", "recommendation": "No replan needed"}
 print(f"\nFinal UI Test Automation Plan:\n{json.dumps(final_plan, indent=2)}")
 ```
+
 如上代码实现了一个规划的Agentic模式，模拟了一个针对最近的UI变更自动化生成测试任务、脚本、执行结果和报告的场景。核心目标是确保跨浏览器兼容性（Chrome、Firefox、Mobile）和>95%的视觉稳定性。例子整个模拟了从规划到多个智能体执行，最后到合成反思最终结果的一个过程，输入是模拟的UI变更日志和DOM风险，输出是完整的测试计划JSON。
+
 ## 并行处理：独立子任务并行飙车，汇总就是王炸！
 
 并行处理模式，它是Agentic模式中的“涡轮增压版“。并行处理模式就是把大任务拆分成一堆相互独立的子任务，然后分发给几个智能体同时干活，每个分支的智能体都独立冲刺，因为相互之间是无依赖的，因此它们之间是零等待，全部完成后，负责聚合结果的智能体会将结果统一输出，这就类似一个Map-Reduce的过程。
 
 ![图片](https://static001.geekbang.org/resource/image/92/27/922f846df54b9f97260c4f194d550527.png?wh=2056x858)
 并行处理模式可以大大提高测试效率，尤其是在一些传统工作中由于执行角色导致的只能串行解决的测试过程。如果你需要对一个电商App进行全面的测试，传统方式是串行执行：先测用户登录，再测搜索功能，然后购物车、支付……一环扣一环，耗时长、效率低。现在，用并行处理模式，我们把大任务“电商App功能测试”拆分成几个相互独立的子任务，分发给多个AI Agent同时执行。
-
 
 ```perl
 import asyncio
@@ -470,13 +470,13 @@ async def parallel_tasks(model: str = model_name) -> str:
     print("\n--- Individual Test Reports ---")
     for i, result in enumerate(results):
         print(f"Report {i+1}: {result}\n")
-    
+
     # 聚合结果（Reduce阶段：汇总成综合报告）
     test_reports = '\n'.join([f"Report {i+1}: {result}" for i, result in enumerate(results)])
     aggregation_prompt = PromptTemplate(
         input_variables=['test_reports'],
-        template="""Based on the following four test reports for e-commerce app, create a cohesive summary. 
-Include a Markdown table with columns: Module, Status, Bug Count, Key Metrics, Suggestions. 
+        template="""Based on the following four test reports for e-commerce app, create a cohesive summary.
+Include a Markdown table with columns: Module, Status, Bug Count, Key Metrics, Suggestions.
 Then, add a one-paragraph overall assessment and recommendations.
 {test_reports}"""
     )
@@ -487,6 +487,7 @@ if __name__ == "__main__":
     result = asyncio.run(parallel_tasks())
     print(f"\n--- Aggregated Test Summary ---\n{result}")
 ```
+
 如上代码就是模拟这个电商App的全面功能测试的并行处理模式的例子，其核心思想是，当有多个独立的、互不依赖的智能体生成任务时，将它们并发执行，而不是按顺序一个一个地等待，从而显著减少总的等待时间。
 
 这个脚本通过asyncio.to_thread和asyncio.gather的组合，解决了如何高效执行多个独立的、I/O 密集型（如此处的 LLM API 调用）任务的问题。Map-Reduce模式的应用将一个大问题（生成一份完整的测试总结）分解为多个可以并行处理的小问题（生成各模块报告），最后再将结果汇总完成测试任务。
@@ -597,23 +598,18 @@ else:
     print(f"Unknown Handling:\n{unknown_txt}")
 
 print(f"\nFinal Bug Diagnosis Report:\n{final_response}")
-
 ```
+
 上面的这段代码就模拟了一个自动化分析软件缺陷报告（Bug Ticket）并进行初步诊断的场景。其核心思想是，当有多个独立的、互不依赖的智能体生成任务时，将它们并发执行，而不是按顺序一个一个地等待，从而显著减少总的等待时间。例子中清晰地展示了路由模式的强大之处，将一个模糊的、复杂的问题分解成两个阶段：“分类”和“专门处理”。这使得每个阶段的智能体任务都更简单、更聚焦，从而提高了最终输出的质量和相关性。
 
 在实际应用中，可以为简单的路由任务选择一个快速、廉价的模型，而为复杂的下游任务选择一个更强大、更昂贵的模型，从而优化成本。
 
-
 ## 总结
 
 今天就到这里了，内容有点多，但理解起来其实并不难，如果有时间你最好把每段代码都在本地运行一遍，充分理解每种模式的优越性，这样当你面对需要用智能体来解决的问题时，你就会想起对应的模式能够快速地解决问题。
-
 
 当然Agentic模式肯定远远不止这五种，未来也会有很大的变化，也许随着大模型的能力提升，一些的工程方法都会变成花拳绣腿，但是目前阶段这些模式还是能够帮助你解决很多实际问题的。
 
 ## 思考题
 
 如果让你用一种模式解决你实际工作中的一个痛点问题，你会选择哪个模式解决什么样的问题呢？期待你把你的想法写在评论区，如果可是用一些Demo的代码实现，那么也请在不涉密的情况下把代码贴出来吧。我们下节课再见！
-
-
-
