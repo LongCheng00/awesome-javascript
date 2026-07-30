@@ -1,7 +1,8 @@
 import { Component } from '@angular/core';
+
 @Component({
-  standalone: true,
+  standalone: false,
   selector: 'app',
-  template: `<div>This is SportStore22</div>`,
+  template: `<store></store>`,
 })
 export class AppComponent {}

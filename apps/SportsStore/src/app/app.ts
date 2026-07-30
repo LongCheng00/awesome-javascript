@@ -1,10 +1,10 @@
 import { Component, signal } from '@angular/core';
-import { AppComponent } from './app.component';
+import { AppModule } from './app.module';
 
 @Component({
   standalone: true,
   selector: 'app-root',
-  imports: [AppComponent],
+  imports: [AppModule],
   templateUrl: './app.html',
   styleUrl: './app.css',
 })
