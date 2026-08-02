@@ -27,6 +27,30 @@
         </h4>
         <div class="card-text bg-white p-1">{{ product.description }}</div>
       </div>
+      <div class="form-inline float-left mr-1">
+        <select
+          [value]="productsPerPage"
+          (change)="changePageSizeFromEvent($event)"
+          name=""
+          id=""
+          class="form-control"
+        >
+          <option [value]="3">3 per Page</option>
+          <option [value]="4">4 per Page</option>
+          <option [value]="6">6 per Page</option>
+          <option [value]="8">8 per Page</option>
+        </select>
+      </div>
+      <div class="btn-group float-right">
+        <button
+          class="btn btn-outline-primary"
+          *ngFor="let page of pageNumbers"
+          (click)="changePage(page)"
+          [class.active]="page == selectedPage"
+        >
+          {{ page }}
+        </button>
+      </div>
     </div>
     <!-- <div class="col-9 bg-success p-2">{{ products.length }} Products</div> -->
   </div>
